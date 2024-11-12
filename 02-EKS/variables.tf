@@ -12,10 +12,10 @@ variable "REGION" {
   type        = string
 }
 
-#variable "ACCOUNT" {
-#  description = "The id used for this account"
-#  type        = string
-#}
+variable "ACCOUNT" {
+  description = "The id used for this account"
+  type        = string
+}
 
 variable "eks" {
   type = object({
@@ -26,6 +26,7 @@ variable "eks" {
       desired_size = number
       max_size     = number
       min_size     = number
+      max_unavailable = number
     })
   })
 } 

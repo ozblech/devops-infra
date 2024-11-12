@@ -1,21 +1,18 @@
-
 ###########################################
 # 1. Configure the backend for remote state in S3
 ###########################################
 terraform {
   backend "s3" {
-    bucket         = "chekcpoint-oz-blech-state-bucket"   # Replace with your bucket name
+    bucket         = "chekcpoint-oz-blech-state-bucket"  
     key            = "eks-cluster/terraform.tfstate"
-    region         = "ap-southeast-2"                   # Replace with your region
-    dynamodb_table = "terraform-lock-table"             # For state locking
+    region         = "ap-southeast-2"                  
+    dynamodb_table = "terraform-lock-table"             
     encrypt        = true
-    #access_key     = "<access-key>"
-    #secret_key     = "<secret-key>"
   }
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0"
+      version = "~> 5.61.0"
     }
   }
 }
@@ -46,11 +43,11 @@ variable "private_subnets" {
 }
 
 ###########################################
-# 4. VPC and Subnets
+# 4. VPC, Subnets, and NAT Gateway
 ###########################################
 resource "aws_vpc" "eks_vpc" {
-  cidr_block = var.vpc_cidr
-  enable_dns_support = true
+  cidr_block           = var.vpc_cidr
+  enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
     Name = "eks-vpc"
@@ -58,10 +55,10 @@ resource "aws_vpc" "eks_vpc" {
 }
 
 resource "aws_subnet" "public_subnet" {
-  count             = 2
-  vpc_id            = aws_vpc.eks_vpc.id
-  cidr_block        = var.public_subnets[count.index]
-  availability_zone = data.aws_availability_zones.available.names[count.index]
+  count                   = 2
+  vpc_id                  = aws_vpc.eks_vpc.id
+  cidr_block              = var.public_subnets[count.index]
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = true
   tags = {
     Name = "eks-public-subnet-${count.index}"
@@ -80,6 +77,7 @@ resource "aws_subnet" "private_subnet" {
   }
 }
 
+# Internet Gateway for public subnets
 resource "aws_internet_gateway" "eks_igw" {
   vpc_id = aws_vpc.eks_vpc.id
   tags = {
@@ -87,6 +85,21 @@ resource "aws_internet_gateway" "eks_igw" {
   }
 }
 
+# NAT Gateway for private subnets
+resource "aws_eip" "nat_eip" {
+  count = 1
+  vpc = true
+}
+
+resource "aws_nat_gateway" "eks_nat_gateway" {
+  allocation_id = aws_eip.nat_eip[0].id
+  subnet_id     = aws_subnet.public_subnet[0].id
+  tags = {
+    Name = "eks-nat-gateway"
+  }
+}
+
+# Route tables
 resource "aws_route_table" "public_route_table" {
   vpc_id = aws_vpc.eks_vpc.id
   route {
@@ -95,16 +108,58 @@ resource "aws_route_table" "public_route_table" {
   }
 }
 
+resource "aws_route_table" "private_route_table" {
+  vpc_id = aws_vpc.eks_vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.eks_nat_gateway.id
+  }
+}
+
+# Associate route tables
 resource "aws_route_table_association" "public_association" {
   count          = 2
   subnet_id      = aws_subnet.public_subnet[count.index].id
   route_table_id = aws_route_table.public_route_table.id
 }
 
+resource "aws_route_table_association" "private_association" {
+  count          = 2
+  subnet_id      = aws_subnet.private_subnet[count.index].id
+  route_table_id = aws_route_table.private_route_table.id
+}
+
 ###########################################
-# 5. IAM Roles for EKS
+# 5. Security Group for EKS
+###########################################
+resource "aws_security_group" "eks_security_group" {
+  vpc_id = aws_vpc.eks_vpc.id
+  description = "EKS security group for cluster communication"
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "eks-cluster-sg"
+  }
+}
+
+###########################################
+# 6. IAM Roles for EKS Cluster and Node Group
 ###########################################
 
+# Cluster Role
 resource "aws_iam_role" "eks_cluster_role" {
   name = "eks-cluster-role"
   assume_role_policy = jsonencode({
@@ -113,9 +168,7 @@ resource "aws_iam_role" "eks_cluster_role" {
       {
         Action    = "sts:AssumeRole"
         Effect    = "Allow"
-        Principal = {
-          Service = "eks.amazonaws.com"
-        }
+        Principal = { Service = "eks.amazonaws.com" }
       }
     ]
   })
@@ -131,31 +184,16 @@ resource "aws_iam_role_policy_attachment" "eks_service_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
 }
 
-###########################################
-# 6. EKS Cluster
-###########################################
-resource "aws_eks_cluster" "eks_cluster" {
-  name     = "${var.aws.Project}-eks-cluster"
-  role_arn = aws_iam_role.eks_cluster_role.arn
-  vpc_config {
-    subnet_ids = concat(aws_subnet.private_subnet[*].id, aws_subnet.public_subnet[*].id)
-  }
-}
-
-###########################################
-# 7. Node Group IAM Role
-###########################################
+# Node Group Role
 resource "aws_iam_role" "eks_node_group_role" {
-  name = "${var.aws.Project}-eks-node-group-role"
+  name = "eks-node-group-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Action    = "sts:AssumeRole"
         Effect    = "Allow"
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
+        Principal = { Service = "ec2.amazonaws.com" }
       }
     ]
   })
@@ -177,6 +215,20 @@ resource "aws_iam_role_policy_attachment" "eks_ecr_policy" {
 }
 
 ###########################################
+# 7. EKS Cluster
+###########################################
+resource "aws_eks_cluster" "eks_cluster" {
+  name     = "checkpoint-eks-cluster"
+  role_arn = aws_iam_role.eks_cluster_role.arn
+  version  = "1.31"
+
+  vpc_config {
+    subnet_ids       = concat(aws_subnet.private_subnet[*].id, aws_subnet.public_subnet[*].id)
+    security_group_ids = [aws_security_group.eks_security_group.id]
+  }
+}
+
+###########################################
 # 8. EKS Node Group
 ###########################################
 resource "aws_eks_node_group" "eks_node_group" {
@@ -186,14 +238,13 @@ resource "aws_eks_node_group" "eks_node_group" {
   subnet_ids      = aws_subnet.private_subnet[*].id
 
   scaling_config {
-    desired_size = var.eks.scaling_config.desired_size
-    max_size     = var.eks.scaling_config.max_size
-    min_size     = var.eks.scaling_config.min_size
+    desired_size = 2
+    max_size     = 3
+    min_size     = 1
   }
 
-  instance_types = [var.eks.instance_type]
-
-  depends_on = [aws_eks_cluster.eks_cluster]
+  instance_types = ["t3.small"]
+  depends_on     = [aws_eks_cluster.eks_cluster]
 }
 
 ###########################################
@@ -202,5 +253,3 @@ resource "aws_eks_node_group" "eks_node_group" {
 data "aws_availability_zones" "available" {
   state = "available"
 }
-
-

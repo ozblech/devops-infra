@@ -1,5 +1,25 @@
 ###########################################
-# AWS Providers
+# 1. Configure the backend for remote state in S3
+###########################################
+terraform {
+  backend "s3" {
+    bucket         = "chekcpoint-oz-blech-state-bucket"  
+    key            = "eks-cluster/terraform.tfstate"
+    region         = "ap-southeast-2"                  
+    dynamodb_table = "terraform-lock-table"             
+    encrypt        = true
+  }
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.61.0"
+    }
+  }
+}
+
+
+###########################################
+# 2. Define AWS Provider
 ###########################################
 provider "aws" {
   region  = var.REGION
@@ -22,7 +42,7 @@ locals {
 
 
 ###########################################
-# Create ECR Repository
+# 3. Create ECR Repository
 ###########################################
 
 resource "aws_ecr_repository" "checkpoint" {

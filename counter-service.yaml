@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: counter-service
+  namespace: counter-service  
+  labels:
+    app: counter-service
+    version: blue
+spec:
+  replicas: 1  
+  selector:
+    matchLabels:
+      app: counter-service
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: counter-service
+        version: blue
+    spec:
+      containers:
+      - name: counter-service
+        image: 686255960187.dkr.ecr.ap-southeast-2.amazonaws.com/checkpoint-task:latest       
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "200m" 
+            memory: "256Mi" 
+          limits:
+            cpu: "500m"  
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: counter-service
+  namespace: counter-service 
+  labels:
+    app: counter-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: counter-service
+    version: blue
+  ports:
+    - protocol: TCP
+      port: 80      
+      targetPort: 8080  # Match the containerPort in the Deployment
