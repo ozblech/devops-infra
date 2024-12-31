@@ -12,10 +12,10 @@ variable "REGION" {
   type        = string
 }
 
-variable "ACCOUNT" {
-  description = "The id used for this account"
-  type        = string
-}
+//variable "ACCOUNT" {
+//  description = "The id used for this account"
+//  type        = string
+//}
 
 variable "eks" {
   type = object({

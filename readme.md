@@ -1,6 +1,6 @@
 EKS Service Deployment Project
 Description
-This project demonstrates the deployment of an EKS (Elastic Kubernetes Service) environment for hosting a Python-based application forked from Counter-service App. The project also implements a CI/CD pipeline using Jenkins to automate application builds, testing, and deployment.
+This project demonstrates the deployment of an EKS (Elastic Kubernetes Service) environment for hosting a Python-based application forked from Counter-service App.
 
 Project Features
 VPC Creation: Sets up a Virtual Private Cloud (VPC) to host the EKS cluster.

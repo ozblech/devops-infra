@@ -3,9 +3,9 @@
 ###########################################
 terraform {
   backend "s3" {
-    bucket         = "chekcpoint-oz-blech-state-bucket"  
+    bucket         = "checkpoint-oz-blech-state-bucket"  
     key            = "eks-cluster/terraform.tfstate"
-    region         = "ap-southeast-2"                  
+    region         = "eu-west-3"                  
     dynamodb_table = "terraform-lock-table"             
     encrypt        = true
   }
@@ -243,7 +243,7 @@ resource "aws_eks_node_group" "eks_node_group" {
     min_size     = 1
   }
 
-  instance_types = ["t3.small"]
+  instance_types = ["t2.micro"]
   depends_on     = [aws_eks_cluster.eks_cluster]
 }
 
