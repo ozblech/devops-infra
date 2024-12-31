@@ -15,8 +15,12 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_wrapper: false
-
-      # Step 3: Run TFLint
+      
+      # Step 3: List tf files
+      - name: List Terraform Files
+        run: ls -R *.tf
+        
+      # Step 4: Run TFLint
       - name: Run TFLint
         run: |
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
