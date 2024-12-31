@@ -18,11 +18,12 @@ jobs:
       
       # Step 3: List tf files
       - name: List Terraform Files
-        run: ls -R *.tf
+        run: ls -R 01-Backend/*.tf
         
       # Step 4: Run TFLint
       - name: Run TFLint
         run: |
+          cd 01-Backend
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
           tflint --init
           tflint
