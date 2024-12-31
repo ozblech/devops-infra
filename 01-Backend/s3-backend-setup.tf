@@ -1,5 +1,6 @@
 # s3-backend-setup.tf
 terraform {
+  required_version = ">= 1.0.0, < 2.0.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
