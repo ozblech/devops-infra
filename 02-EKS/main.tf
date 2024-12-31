@@ -255,3 +255,12 @@ resource "aws_eks_node_group" "eks_node_group" {
 data "aws_availability_zones" "available" {
   state = "available"
 }
+
+###########################################
+# 10. AWS Systems Manager Parameter Store
+###########################################
+resource "aws_ssm_parameter" "aws_eks_cluster" {
+  name  = "/checkpoint/eks_cluster"
+  type  = "String"
+  value = aws_eks_cluster.eks_cluster.name
+}

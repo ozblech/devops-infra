@@ -7,8 +7,8 @@ aws = {
   Name        = "oz.blech"
   Project     = "checkpoint"
 }
-#PROFILE = "default"
-#REGION = "ap-southeast-2"
+PROFILE = "default"
+REGION = "eu-west-3"
 
 
 

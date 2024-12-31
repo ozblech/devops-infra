@@ -3,9 +3,9 @@
 ###########################################
 terraform {
   backend "s3" {
-    bucket         = "chekcpoint-oz-blech-state-bucket"  
-    key            = "eks-cluster/terraform.tfstate"
-    region         = "ap-southeast-2"                  
+    bucket         = "checkpoint-oz-blech-state-bucket"  
+    key            = "ecr/terraform.tfstate"
+    region         = "eu-west-3"                  
     dynamodb_table = "terraform-lock-table"             
     encrypt        = true
   }
@@ -53,4 +53,10 @@ resource "aws_ecr_repository" "checkpoint" {
   # lifecycle {
   #   prevent_destroy = true 
   # }
+}
+
+resource "aws_ssm_parameter" "aws_ecr_repository" {
+  name  = "/checkpoint/ecr_repository"
+  type  = "String"
+  value = aws_ecr_repository.checkpoint.repository_url
 }
