@@ -1,7 +1,3 @@
-variable "aws" {
-  type = map(string)
-}
-
 variable "PROFILE" {
   description = "The AWS profile used for this account"
   type        = string

@@ -2,6 +2,7 @@
 # 1. Configure the backend for remote state in S3
 ###########################################
 terraform {
+  required_version = ">= 1.0.0, < 2.0.0"
   backend "s3" {
     bucket         = "checkpoint-oz-blech-state-bucket"  
     key            = "eks-cluster/terraform.tfstate"
@@ -29,6 +30,7 @@ provider "aws" {
 # 3. Variables
 ###########################################
 variable "vpc_cidr" {
+  type    = string
   default = "10.0.0.0/16"
 }
 
@@ -218,12 +220,12 @@ resource "aws_iam_role_policy_attachment" "eks_ecr_policy" {
 # 7. EKS Cluster
 ###########################################
 resource "aws_eks_cluster" "eks_cluster" {
-  name     = "checkpoint-eks-cluster"
+  name     = var.eks.cluster_name
   role_arn = aws_iam_role.eks_cluster_role.arn
-  version  = "1.31"
+  version  = var.eks.eks_version
 
   vpc_config {
-    subnet_ids       = concat(aws_subnet.private_subnet[*].id, aws_subnet.public_subnet[*].id)
+    subnet_ids = concat(aws_subnet.private_subnet[*].id, aws_subnet.public_subnet[*].id)
     security_group_ids = [aws_security_group.eks_security_group.id]
   }
 }
@@ -243,7 +245,7 @@ resource "aws_eks_node_group" "eks_node_group" {
     min_size     = 1
   }
 
-  instance_types = ["t2.micro"]
+  instance_types = [var.eks.instance_type]
   depends_on     = [aws_eks_cluster.eks_cluster]
 }
 
