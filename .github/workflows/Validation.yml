@@ -19,6 +19,6 @@ jobs:
       # Step 3: Run TFLint
       - name: Run TFLint
         run: |
-          sudo apt-get install -y tflint
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
           tflint --init
           tflint
