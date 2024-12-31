@@ -6,10 +6,12 @@ Project Features
 VPC Creation: Sets up a Virtual Private Cloud (VPC) to host the EKS cluster.
 EKS Deployment: Deploys the application and its dependencies in the EKS environment.
 ECR (Elastic Container Registry): Stores Docker images for the application.
+
 Namespace Structure
 The EKS cluster uses the following namespaces:
-
 counter-service: Contains the Python application.
+
+
 Load Balancing
 A public LoadBalancer is set up for the application namespace to handle internet traffic, while database access remains secure within a private network.
 
@@ -20,6 +22,7 @@ AWS CLI
 kubectl
 Docker
 Terraform
+
 Setup Instructions
 Clone the repository:
 git clone https://github.com/ozblech/devops-infra.git

@@ -21,3 +21,6 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
+# Igonore .tflint.hcl files
+.tflint.hcl
+
