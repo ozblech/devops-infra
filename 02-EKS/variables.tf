@@ -1,8 +1,4 @@
-variable "test"{
-  type = string
-  default = "test"
-}
-
+// Define the variables used in the EKS module
 variable "PROFILE" {
   description = "The AWS profile used for this account"
   type        = string
