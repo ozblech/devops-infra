@@ -1,0 +1,24 @@
+name: Validate IaC
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Install Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      # Step 3: Run TFLint
+      - name: Run TFLint
+        run: |
+          sudo apt-get install -y tflint
+          tflint --init
+          tflint
