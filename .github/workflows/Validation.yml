@@ -26,4 +26,4 @@ jobs:
           cd 01-Backend
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
           tflint --init
-          tflint
+          find . -type d -exec tflint --chdir={} \; #Run tflint on all directories
