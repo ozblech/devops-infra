@@ -1,3 +1,9 @@
+variable "test"
+{
+  type = string
+  default = "test"
+}
+
 variable "PROFILE" {
   description = "The AWS profile used for this account"
   type        = string
